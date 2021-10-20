@@ -56,7 +56,7 @@ def index():
 def dl_form():
     url = request.form['url']
     video_or_audio = request.form['video_or_audio']
-    quality = request.form['quality']
+    quality = request.form.get('quality', 'good')
 
     dt = datetime.strftime(datetime.now(), "%Y-%m-%d_%H-%M")
 
