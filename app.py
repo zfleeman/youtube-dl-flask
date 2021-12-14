@@ -1,9 +1,32 @@
 import youtube_dl
 from datetime import datetime
-from flask import Flask, request
-from youtube_dl.utils import sanitize_filename
+from flask import Flask, request, redirect
+from celery import Celery
+
+def make_celery(app):
+    celery = Celery(
+        app.import_name,
+        backend=app.config['CELERY_RESULT_BACKEND'],
+        broker=app.config['CELERY_BROKER_URL']
+    )
+    celery.conf.update(app.config)
+
+    class ContextTask(celery.Task):
+        def __call__(self, *args, **kwargs):
+            with app.app_context():
+                return self.run(*args, **kwargs)
+
+    celery.Task = ContextTask
+    return celery
+
 
 app = Flask(__name__)
+
+app.config.update(
+    CELERY_BROKER_URL='redis://192.168.1.7:6379',
+    CELERY_RESULT_BACKEND='redis://192.168.1.7:6379'
+)
+celery = make_celery(app)
 
 @app.route("/")
 def index():
@@ -52,6 +75,12 @@ def index():
             </html>
             '''
 
+@celery.task()
+def download(ydl_opts, url):
+    ydl = youtube_dl.YoutubeDL(params=ydl_opts)
+    ydl.download([url])
+
+
 @app.route("/download", methods=['POST'])
 def dl_form():
     url = request.form['url']
@@ -80,21 +109,5 @@ def dl_form():
 
     print('\n\n{}\n\n'.format(ydl_opts))
 
-    ydl = youtube_dl.YoutubeDL(params=ydl_opts)
-    info = ydl.extract_info(url = url)
-
-    ydl.download([url])
-
-    return '''
-        <html>
-            <head>
-                <title>Downloaded</title>
-            </head>
-            <body>
-                <h1>Hey, good news.</h1>
-                <p>Your file(s) will look like this: {filename}</p>
-            </body>
-        </html>
-        '''.format(filename = dt + '_' + sanitize_filename(info['title'], restricted=True))
-
-app.run('0.0.0.0', port=5111, debug=True)
+    result = download.delay(ydl_opts, url)
+    return redirect("/")

@@ -5,4 +5,4 @@ RUN apk add --no-cache ffmpeg
 WORKDIR /usr/app/
 COPY app.py .
 EXPOSE 5111
-CMD ["python","/usr/app/app.py"]
+CMD /usr/app/run_app.sh
