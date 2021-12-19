@@ -1,8 +1,9 @@
 FROM python:3-alpine
-RUN pip install --upgrade youtube-dl
-RUN pip install flask
-RUN apk add --no-cache ffmpeg
 WORKDIR /usr/app/
-COPY app.py .
+COPY . .
+RUN apk add --no-cache g++ ffmpeg
+RUN pip install --upgrade pip
+RUN pip install -r requirements.txt
+WORKDIR /usr/app/
 EXPOSE 5111
 CMD ["python","/usr/app/app.py"]

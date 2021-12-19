@@ -1,7 +1,6 @@
-import youtube_dl
+import yt_dlp
 from datetime import datetime
 from flask import Flask, request
-from youtube_dl.utils import sanitize_filename
 
 app = Flask(__name__)
 
@@ -80,8 +79,7 @@ def dl_form():
 
     print('\n\n{}\n\n'.format(ydl_opts))
 
-    ydl = youtube_dl.YoutubeDL(params=ydl_opts)
-    info = ydl.extract_info(url = url)
+    ydl = yt_dlp.YoutubeDL(params=ydl_opts)
 
     ydl.download([url])
 
@@ -92,9 +90,9 @@ def dl_form():
             </head>
             <body>
                 <h1>Hey, good news.</h1>
-                <p>Your file(s) will look like this: {filename}</p>
+                <p>Your file downloaded.</p>
             </body>
         </html>
-        '''.format(filename = dt + '_' + sanitize_filename(info['title'], restricted=True))
+        '''
 
 app.run('0.0.0.0', port=5111, debug=True)
