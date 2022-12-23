@@ -1,6 +1,6 @@
 import yt_dlp
 from datetime import datetime
-from flask import Flask, request
+from flask import Flask, request, send_file, redirect
 
 app = Flask(__name__)
 
@@ -22,7 +22,7 @@ def index():
                 <body>
                     <div class="container-fluid">
                         <h1>ZF's YT DL-er</h1>
-                        <form action="/download", method="post">
+                        <form action="/process", method="post">
                             <label>
                                 YouTube Link:<br />
                                 <input type="text" name="url" />
@@ -51,7 +51,7 @@ def index():
             </html>
             '''
 
-@app.route("/download", methods=['POST'])
+@app.route("/process", methods=['POST'])
 def dl_form():
     url = request.form['url']
     video_or_audio = request.form['video_or_audio']
@@ -60,9 +60,9 @@ def dl_form():
     dt = datetime.strftime(datetime.now(), "%Y-%m-%d_%H-%M")
 
     ydl_opts = {
-        'restrictfilenames':True,
+        'restrictfilenames': True,
         'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]',
-        'outtmpl': 'output/' + dt + '_%(title)s.f%(format_id)s.%(ext)s'
+        'outtmpl': 'output/' + dt + '_%(title)s.%(ext)s',
     }
 
     if video_or_audio == 'a':
@@ -81,18 +81,14 @@ def dl_form():
 
     ydl = yt_dlp.YoutubeDL(params=ydl_opts)
 
+    info_dict = ydl.extract_info(url, download=False)
+
     ydl.download([url])
 
-    return '''
-        <html>
-            <head>
-                <title>Downloaded</title>
-            </head>
-            <body>
-                <h1>Hey, good news.</h1>
-                <p>Your file downloaded.</p>
-            </body>
-        </html>
-        '''
+    return redirect('/download?filename=' + ydl.prepare_filename(info_dict))
+
+@app.route("/download", methods=['GET'])
+def get_file():
+    return send_file(request.args['filename'], as_attachment=True)
 
 app.run('0.0.0.0', port=5111, debug=True)
