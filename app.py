@@ -4,9 +4,10 @@ from flask import Flask, request, send_file, redirect
 
 app = Flask(__name__)
 
+
 @app.route("/")
 def index():
-    return '''
+    return """
             <!doctype html>
             <html lang="en">
                 <head>
@@ -49,35 +50,42 @@ def index():
                     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
                 </body>
             </html>
-            '''
+            """
 
-@app.route("/process", methods=['POST'])
+
+@app.route("/process", methods=["POST"])
 def dl_form():
-    url = request.form['url']
-    video_or_audio = request.form['video_or_audio']
-    quality = request.form.get('quality', 'good')
+    url = request.form["url"]
+    video_or_audio = request.form["video_or_audio"]
+    quality = request.form.get("quality", "good")
 
     dt = datetime.strftime(datetime.now(), "%Y-%m-%d_%H-%M")
 
     ydl_opts = {
-        'restrictfilenames': True,
-        'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]',
-        'outtmpl': 'output/' + dt + '_%(title)s.%(ext)s',
+        "restrictfilenames": True,
+        "format": "bestvideo[ext=mp4]+bestaudio[ext=m4a]",
+        "outtmpl": "output/" + dt + "_%(title)s.%(ext)s",
     }
 
-    if video_or_audio == 'a':
-        ydl_opts.update({'format':'bestaudio[ext=m4a]'})
+    if video_or_audio == "a":
+        ydl_opts.update({"format": "bestaudio[ext=m4a]"})
 
-    if video_or_audio == 'v':
-        ydl_opts.update({'format':'bestvideo[ext=mp4]'})
+    if video_or_audio == "v":
+        ydl_opts.update({"format": "bestvideo[ext=mp4]"})
 
-    if video_or_audio == 'kitchen_sink':
-        ydl_opts.update({'format':'bestvideo[ext=mp4],bestaudio[ext=m4a],bestvideo[ext=mp4]+bestaudio[ext=m4a]'})
+    if video_or_audio == "kitchen_sink":
+        ydl_opts.update(
+            {
+                "format": "bestvideo[ext=mp4],bestaudio[ext=m4a],bestvideo[ext=mp4]+bestaudio[ext=m4a]"
+            }
+        )
 
-    if quality == 'bad':
-        ydl_opts['format'] = ydl_opts['format'].replace('bestvideo','bestvideo[height <= 480]')
+    if quality == "bad":
+        ydl_opts["format"] = ydl_opts["format"].replace(
+            "bestvideo", "bestvideo[height <= 480]"
+        )
 
-    print('\n\n{}\n\n'.format(ydl_opts))
+    print("\n\n{}\n\n".format(ydl_opts))
 
     ydl = yt_dlp.YoutubeDL(params=ydl_opts)
 
@@ -85,11 +93,13 @@ def dl_form():
 
     ydl.download([url])
 
-    return redirect('/download?filename=' + ydl.prepare_filename(info_dict))
+    return redirect("/download?filename=" + ydl.prepare_filename(info_dict))
 
-@app.route("/download", methods=['GET'])
+
+@app.route("/download", methods=["GET"])
 def get_file():
-    return send_file(request.args['filename'], as_attachment=True)
+    return send_file(request.args["filename"], as_attachment=True)
+
 
 if __name__ == "__main__":
-    app.run('0.0.0.0', port=5111, debug=True)
+    app.run("0.0.0.0", port=5111, debug=True)
