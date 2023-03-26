@@ -5,6 +5,15 @@ from flask import Flask, request, send_file, redirect
 app = Flask(__name__)
 
 
+def url_help(url: str):
+    symbols = {"+": "%2B", " ": "%20"}
+
+    for k, v in symbols.items():
+        url = url.replace(k, v)
+
+    return url
+
+
 @app.route("/")
 def index():
     return """
@@ -93,7 +102,9 @@ def dl_form():
 
     ydl.download([url])
 
-    return redirect("/download?filename=" + ydl.prepare_filename(info_dict))
+    fname = url_help(ydl.prepare_filename(info_dict))
+
+    return redirect("/download?filename=" + fname)
 
 
 @app.route("/download", methods=["GET"])
