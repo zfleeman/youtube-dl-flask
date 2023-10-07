@@ -70,36 +70,31 @@ def dl_form():
 
     dt = datetime.strftime(datetime.now(), "%Y-%m-%d_%H-%M")
 
+    bv = "bv[ext=mp4][vcodec^=av]"
+    ba = "ba[ext=m4a][acodec^=mp4a]"
+
     ydl_opts = {
         "restrictfilenames": True,
-        "format": "bestvideo[ext=mp4]+bestaudio[ext=m4a]",
+        "format": f"{bv}+{ba}",
         "outtmpl": "output/" + dt + "_%(title)s.%(ext)s",
     }
 
     if video_or_audio == "a":
-        ydl_opts.update({"format": "bestaudio[ext=m4a]"})
+        ydl_opts.update({"format": f"{ba}"})
 
     if video_or_audio == "v":
-        ydl_opts.update({"format": "bestvideo[ext=mp4]"})
+        ydl_opts.update({"format": f"{bv}"})
 
     if video_or_audio == "kitchen_sink":
-        ydl_opts.update(
-            {
-                "format": "bestvideo[ext=mp4],bestaudio[ext=m4a],bestvideo[ext=mp4]+bestaudio[ext=m4a]"
-            }
-        )
+        ydl_opts.update({"format": f"{bv},{ba},{bv}+{ba}"})
 
     if quality == "bad":
-        ydl_opts["format"] = ydl_opts["format"].replace(
-            "bestvideo", "bestvideo[height <= 480]"
-        )
+        ydl_opts["format"] = f"{bv}[height<=480]+{ba}"
 
     print("\n\n{}\n\n".format(ydl_opts))
 
     ydl = yt_dlp.YoutubeDL(params=ydl_opts)
-
     info_dict = ydl.extract_info(url, download=False)
-
     ydl.download([url])
 
     fname = url_help(ydl.prepare_filename(info_dict))
