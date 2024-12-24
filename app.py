@@ -70,7 +70,7 @@ def dl_form():
 
     dt = datetime.strftime(datetime.now(), "%Y-%m-%d_%H-%M")
 
-    bv = "bv[ext=mp4][vcodec^=av]"
+    bv = "bv[ext=mp4][vcodec^=avc]"
     ba = "ba[ext=m4a][acodec^=mp4a]"
 
     ydl_opts = {
