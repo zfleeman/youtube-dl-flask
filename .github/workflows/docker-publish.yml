@@ -1,8 +1,9 @@
 name: Docker Build and Push
 
 on:
-  schedule:
-    - cron: '0 2 * * 1'
+  push:
+    branches:
+      - main
 jobs:
   push_to_registry:
     name: Push Docker image to Docker Hub
@@ -22,4 +23,4 @@ jobs:
         with:
           context: .
           push: true
-          tags: zachfleeman/yt_dlp-flask:latest
+          tags: zachfleeman/yt-dlp-flask:latest
