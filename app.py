@@ -7,8 +7,8 @@ import yt_dlp
 
 app = Flask(__name__)
 
-video_filter = os.getenv("VIDEO_FILTER", "bv[ext=mp4][vcodec^=avc]")  # Fix usage of os.getenv
-audio_filter = os.getenv("AUDIO_FILTER", "ba[ext=m4a][acodec^=mp4a]")  # Fix usage of os.getenv
+video_filter = os.getenv("VIDEO_FILTER", "bv[ext=mp4][vcodec^=avc]")
+audio_filter = os.getenv("AUDIO_FILTER", "ba[ext=m4a][acodec^=mp4a]")
 
 @app.route("/")
 def index():
