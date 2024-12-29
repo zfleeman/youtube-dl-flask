@@ -10,6 +10,7 @@ app = Flask(__name__)
 video_filter = os.getenv("VIDEO_FILTER", "bv[ext=mp4][vcodec^=avc]")
 audio_filter = os.getenv("AUDIO_FILTER", "ba[ext=m4a][acodec^=mp4a]")
 
+
 @app.route("/")
 def index():
     return render_template("form.html")
@@ -27,7 +28,7 @@ def dl_form():
         "va": f"{video_filter}+{audio_filter}",
         "a": f"{audio_filter}",
         "v": f"{video_filter}",
-        "kitchen_sink": f"{video_filter},{audio_filter},{video_filter}+{audio_filter}"
+        "kitchen_sink": f"{video_filter},{audio_filter},{video_filter}+{audio_filter}",
     }
 
     ydl_opts = {
@@ -48,7 +49,7 @@ def dl_form():
     except Exception as e:
         return f"An error occurred: {e}", 500
 
-    fname = quote(ydl.prepare_filename(info_dict), safe='')
+    fname = quote(ydl.prepare_filename(info_dict), safe="")
 
     return redirect("/download?filename=" + fname)
 
