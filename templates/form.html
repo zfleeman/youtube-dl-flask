@@ -13,7 +13,8 @@
     <body>
         <div class="container-fluid">
             <h1>ZF's YT DL-er</h1>
-            <p>yt-dlp version: {{ yt_dlp_version }}</p>
+            <p style="margin-bottom: 4px;">yt-dlp version: {{ env_version }} <span style="color: red;"><em>{{ "OUTDATED" if pypi_version != env_version else "" }}</em></span></p>
+            <p><span style="color: red;"><em>{{ "New version: " + pypi_version if pypi_version != env_version else "" }}</em></span></p>
             <form action="/process" method="post">
                 <label for="url">
                     YouTube Link:<br />
