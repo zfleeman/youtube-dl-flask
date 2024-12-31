@@ -1,7 +1,9 @@
 from datetime import datetime
+from importlib.metadata import version
 import os
 from urllib.parse import quote
 
+import requests
 from flask import Flask, request, send_file, redirect, render_template
 import yt_dlp
 
@@ -13,7 +15,16 @@ audio_filter = os.getenv("AUDIO_FILTER", "ba[ext=m4a][acodec^=mp4a]")
 
 @app.route("/")
 def index():
-    return render_template("form.html")
+    env_version = version("yt-dlp")
+
+    response = requests.get("https://pypi.org/pypi/yt-dlp/json")
+    if response.ok:
+        data = response.json()
+        pypi_version = data["info"]["version"]
+    else:
+        pypi_version = "UNABLE TO RETRIEVE VERSION FROM PYPI"
+
+    return render_template("form.html", env_version=env_version, pypi_version=pypi_version)
 
 
 @app.route("/process", methods=["POST"])
