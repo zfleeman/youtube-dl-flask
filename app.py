@@ -22,8 +22,11 @@ format_options = {
 
 @app.route("/")
 def index():
+
+    # get yt-dlp's current version
     env_version = version("yt-dlp")
 
+    # poll the web and get the most recent version for an "OUTDATED" warning
     response = requests.get("https://pypi.org/pypi/yt-dlp/json")
     if response.ok:
         data = response.json()
@@ -40,10 +43,10 @@ def dl_form():
     url = request.form["url"]
     video_or_audio = request.form["video_or_audio"]
     auto_dl = request.form.get("auto_dl") == "dl"
-
     video_format_id = request.form.get("video_format_id")
     audio_format_id = request.form.get("audio_format_id")
 
+    # create the all-important ydl params
     dt = datetime.strftime(datetime.now(), "%Y-%m-%d_%H-%M")
     ydl_opts = {
         # "listformats": True,
@@ -51,6 +54,7 @@ def dl_form():
         "outtmpl": f"output/{dt}_%(title)s.%(ext)s",
     }
 
+    # fill in the format in the ydl_opts dictionary from the webform or the application defaults (best video and audio)
     if video_format_id or audio_format_id:
         if video_format_id and audio_format_id:
             format_id = f"{video_format_id}+{audio_format_id}"
@@ -63,28 +67,36 @@ def dl_form():
 
     try:
         ydl = yt_dlp.YoutubeDL(params=ydl_opts)
+
+        # the video_info dictionary is used to populate the webform and to get information about our video
         video_info = ydl.extract_info(url, download=False)
         video_info["auto_dl"] = auto_dl
+
+        # gather up the audio/video formats for later display
         video_info["audio_formats"] = [
-            format for format in video_info.get("formats", []) if format["resolution"] == "audio only"
+            format for format in video_info.get("formats", []) if format["vcodec"] == "none"
         ]
         video_info["video_formats"] = [
             format
             for format in video_info.get("formats", [])
-            if format["resolution"] != "audio only" and format["ext"] != "mhtml"
+            if format["vcodec"] != "none" and format["acodec"] == "none"
         ]
 
+        # clean up our file name a bit
         video_info["clean_name"] = quote(ydl.prepare_filename(video_info))
 
-        # get "selected" formats
+        # get "selected" formats from the info dict
         selected_format_ids = set(video_info["format_id"].split("+"))
 
-        video_info["selected_ids"] = []
-        for format in video_info["formats"]:
-            if format["format_id"] in selected_format_ids:
-                video_info["selected_ids"].append(format["format_id"])
+        # create a small list for later html formatting
+        video_info["selected_ids"] = [
+            format["format_id"] for format in video_info["formats"]
+            if format["format_id"] in selected_format_ids
+        ]
 
+        # initiate the download if the checkbox is selected
         if auto_dl:
+            print(ydl_opts)
             ydl.download([url])
             return send_file(video_info["clean_name"], as_attachment=True)
 
