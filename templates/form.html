@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <!-- Required meta tags -->
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+        <!-- Bootstrap CSS -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
+        <title>YTDL</title>
+
+    </head>
+    <body>
+        <div class="container-fluid">
+            <h1>ZF's YT DL-er</h1>
+            {% if env_version %}
+                <p style="margin-bottom: 4px;">yt-dlp version: {{ env_version }} <span style="color: red;"><em>{{ "OUTDATED" if pypi_version != env_version else "" }}</em></span></p>
+                <p><span style="color: red;"><em>{{ "New version: " + pypi_version if pypi_version != env_version else "" }}</em></span></p>
+            {% endif %}
+            <form action="/process" method="post">
+                <label for="url">
+                    YouTube Link:<br />
+                    <input type="text" name="url" id="url" value="{{ url if url else '' }}" required />
+                </label>
+                <br />
+                <fieldset>
+                    <legend>Choose format:</legend>
+                    <input type="radio" id="va" name="video_or_audio" value="va" checked />
+                    <label for="va">Video and Audio</label><br>
+                    <input type="radio" id="a" name="video_or_audio" value="a" />
+                    <label for="a">Audio</label><br>
+                    <input type="radio" id="v" name="video_or_audio" value="v" />
+                    <label for="v">Video</label><br>
+                    <input type="radio" id="kitchen_sink" name="video_or_audio" value="kitchen_sink" />
+                    <label for="kitchen_sink">Three Files</label><br>
+                </fieldset>
+                <input type="checkbox" id="auto_dl" name="auto_dl" value="dl" checked>
+                <label for="auto_dl">Instant Download</label><br>
+                <input type="submit" value="Submit" /><br><br>
+
+
+            {% if video_info %}
+                {# <h3>Video Information</h3>
+                <p>Title: {{ video_info.title }}</p>
+                <p>Description: {{ video_info.description }}</p> #}
+
+                <h3>Video Formats</h3>
+                <input type="radio" name="video_format_id" id="no-vid" value="" />
+                <label for="no-vid">None</label><br />
+
+                {% for format in video_info['video_formats'] %}
+                    <input type="radio" name="video_format_id" id="{{ format['format_id'] }}" value="{{ format['format_id'] }}" {{ "checked" if format["format_id"] in video_info["selected_ids"] }} />
+                    <label for="{{ format['format_id'] }}">{{ format['format'] }} // {{ format["vcodec"] }} // {{ format["ext"] }}</label><br />
+                {% endfor %}
+
+                <h3>Audio Formats</h3>
+                <input type="radio" name="audio_format_id" id="no-aud" value="" />
+                <label for="no-aud">None</label><br />
+                {% for format in video_info['audio_formats'] %}
+                    <input type="radio" name="audio_format_id" id="{{ format['format_id'] }}" value="{{ format['format_id'] }}" {{ "checked" if format["format_id"] in video_info["selected_ids"] }} />
+                    <label for="{{ format['format_id'] }}">{{ format['format'] }} // {{ format["acodec"] }} // {{ format["ext"] }}</label><br />
+                {% endfor %}
+            {% endif %}
+            </form>
+        </div>
+
+        <!-- Optional JavaScript -->
+        <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+        <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    </body>
+</html>
