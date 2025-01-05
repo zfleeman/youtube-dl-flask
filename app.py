@@ -43,9 +43,10 @@ def dl_form():
     }
 
     ydl_opts = {
+        # "listformats": True,
         "restrictfilenames": True,
         "format": format_options.get(video_or_audio),
-        "outtmpl": f"output/{dt}_%(title)s.%(ext)s",
+        "outtmpl": f"output/{dt}_%(title)s.%(ext)s"
     }
 
     if quality == "bad":
@@ -55,14 +56,52 @@ def dl_form():
 
     try:
         ydl = yt_dlp.YoutubeDL(params=ydl_opts)
-        info_dict = ydl.extract_info(url, download=False)
+        video_info = ydl.extract_info(url, download=False)
+        video_info["audio_formats"] = [
+            format for format in video_info.get("formats", []) if format["resolution"] == "audio only"
+        ]
+        video_info["video_formats"] = [
+            format
+            for format in video_info.get("formats", [])
+            if format["resolution"] != "audio only" and format["ext"] != "mhtml"
+        ]
+
+        video_info["clean_name"] = ydl.prepare_filename(video_info)
+
+        # get "selected" formats
+        format_ids = video_info["format_id"].split("+")
+
+        for video_format in video_info["video_formats"]:
+            if format_ids[0] == video_format["format_id"] and video_format["audio_ext"] == "none":
+                print(f"video format: {video_format}")
+                break
+        for audio_format in video_info["audio_formats"] and video_format["video_ext"] == "none":
+            if format_ids[1] == audio_format["format_id"]:
+                print(f"audio format: {audio_format}")
+                break
+  
+        # print(f"vcodec: {vcodec}")
+        # print(f"acodec: {acodec}")
+
+
+        formats = video_info.get("formats", [])
         ydl.download([url])
+
+
+        # Debug print the formats
+        # print("Available formats:")
+        # for f in selected_formats:
+        #     print(f"{f}")
     except Exception as e:
         return f"An error occurred: {e}", 500
+    
+    # ydl.download([url])
 
-    fname = quote(ydl.prepare_filename(info_dict), safe="")
+    # if selected_formats:
+    #     for f in selected_formats:
+    #         print(f"ID: {f['format_id']}, Info: {f}")
 
-    return redirect("/download?filename=" + fname)
+    return render_template("form.html", video_info=video_info)
 
 
 @app.route("/download", methods=["GET"])

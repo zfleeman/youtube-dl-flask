@@ -9,12 +9,24 @@
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
 
         <title>YTDL</title>
+        <script>
+            // Automatically trigger the download if the page contains video data
+            document.addEventListener("DOMContentLoaded", function () {
+            {% if video_info %}
+                var filename = "{{ video_info['clean_name'] }}";
+                window.location.href = "/download?filename=" + filename;
+            {% endif %}
+            });
+        </script>
+
     </head>
     <body>
         <div class="container-fluid">
             <h1>ZF's YT DL-er</h1>
-            <p style="margin-bottom: 4px;">yt-dlp version: {{ env_version }} <span style="color: red;"><em>{{ "OUTDATED" if pypi_version != env_version else "" }}</em></span></p>
-            <p><span style="color: red;"><em>{{ "New version: " + pypi_version if pypi_version != env_version else "" }}</em></span></p>
+            {% if env_version %}
+                <p style="margin-bottom: 4px;">yt-dlp version: {{ env_version }} <span style="color: red;"><em>{{ "OUTDATED" if pypi_version != env_version else "" }}</em></span></p>
+                <p><span style="color: red;"><em>{{ "New version: " + pypi_version if pypi_version != env_version else "" }}</em></span></p>
+            {% endif %}
             <form action="/process" method="post">
                 <label for="url">
                     YouTube Link:<br />
@@ -36,6 +48,14 @@
                 <label for="quality">Lower Quality</label><br>
                 <input type="submit" value="Submit" />
             </form>
+
+            {% if video_info %}
+                <h2>Video Information</h2>
+                <pre><code>
+                    <p>Title: {{ video_info.title }}</p>
+                    <p>Description: {{ video_info.description }}</p>
+                </pre></code>
+            {% endif %}
         </div>
 
         <!-- Optional JavaScript -->
