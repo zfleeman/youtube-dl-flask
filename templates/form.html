@@ -9,15 +9,6 @@
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
 
         <title>YTDL</title>
-        <script>
-            // Automatically trigger the download if the page contains video data
-            document.addEventListener("DOMContentLoaded", function () {
-            {% if video_info %}
-                var filename = "{{ video_info['clean_name'] }}";
-                window.location.href = "/download?filename=" + filename;
-            {% endif %}
-            });
-        </script>
 
     </head>
     <body>
@@ -30,7 +21,7 @@
             <form action="/process" method="post">
                 <label for="url">
                     YouTube Link:<br />
-                    <input type="text" name="url" id="url" required />
+                    <input type="text" name="url" id="url" value="{{ url if url else '' }}" required />
                 </label>
                 <br />
                 <fieldset>
@@ -44,18 +35,34 @@
                     <input type="radio" id="kitchen_sink" name="video_or_audio" value="kitchen_sink" />
                     <label for="kitchen_sink">Three Files</label><br>
                 </fieldset>
-                <input type="checkbox" id="quality" name="quality" value="bad">
-                <label for="quality">Lower Quality</label><br>
-                <input type="submit" value="Submit" />
-            </form>
+                <input type="checkbox" id="auto_dl" name="auto_dl" value="dl" checked>
+                <label for="auto_dl">Instant Download</label><br>
+                <input type="submit" value="Submit" /><br><br>
+
 
             {% if video_info %}
-                <h2>Video Information</h2>
-                <pre><code>
-                    <p>Title: {{ video_info.title }}</p>
-                    <p>Description: {{ video_info.description }}</p>
-                </pre></code>
+                {# <h3>Video Information</h3>
+                <p>Title: {{ video_info.title }}</p>
+                <p>Description: {{ video_info.description }}</p> #}
+
+                <h3>Video Formats</h3>
+                <input type="radio" name="video_format_id" id="no-vid" value="" />
+                <label for="no-vid">None</label><br />
+
+                {% for format in video_info['video_formats'] %}
+                    <input type="radio" name="video_format_id" id="{{ format['format_id'] }}" value="{{ format['format_id'] }}" {{ "checked" if format["format_id"] in video_info["selected_ids"] }} />
+                    <label for="{{ format['format_id'] }}">{{ format['format'] }} // {{ format["vcodec"] }} // {{ format["ext"] }}</label><br />
+                {% endfor %}
+
+                <h3>Audio Formats</h3>
+                <input type="radio" name="audio_format_id" id="no-aud" value="" />
+                <label for="no-aud">None</label><br />
+                {% for format in video_info['audio_formats'] %}
+                    <input type="radio" name="audio_format_id" id="{{ format['format_id'] }}" value="{{ format['format_id'] }}" {{ "checked" if format["format_id"] in video_info["selected_ids"] }} />
+                    <label for="{{ format['format_id'] }}">{{ format['format'] }} // {{ format["acodec"] }} // {{ format["ext"] }}</label><br />
+                {% endfor %}
             {% endif %}
+            </form>
         </div>
 
         <!-- Optional JavaScript -->

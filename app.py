@@ -12,6 +12,13 @@ app = Flask(__name__)
 video_filter = os.getenv("VIDEO_FILTER", "bv[ext=mp4][vcodec^=avc]")
 audio_filter = os.getenv("AUDIO_FILTER", "ba[ext=m4a][acodec^=mp4a]")
 
+format_options = {
+    "va": f"{video_filter}+{audio_filter}",
+    "a": f"{audio_filter}",
+    "v": f"{video_filter}",
+    "kitchen_sink": f"{video_filter},{audio_filter},{video_filter}+{audio_filter}",
+}
+
 
 @app.route("/")
 def index():
@@ -29,34 +36,35 @@ def index():
 
 @app.route("/process", methods=["POST"])
 def dl_form():
+    # get information from the form
     url = request.form["url"]
     video_or_audio = request.form["video_or_audio"]
-    quality = request.form.get("quality", "good")
+    auto_dl = request.form.get("auto_dl") == "dl"
+
+    video_format_id = request.form.get("video_format_id")
+    audio_format_id = request.form.get("audio_format_id")
 
     dt = datetime.strftime(datetime.now(), "%Y-%m-%d_%H-%M")
-
-    format_options = {
-        "va": f"{video_filter}+{audio_filter}",
-        "a": f"{audio_filter}",
-        "v": f"{video_filter}",
-        "kitchen_sink": f"{video_filter},{audio_filter},{video_filter}+{audio_filter}",
-    }
-
     ydl_opts = {
         # "listformats": True,
         "restrictfilenames": True,
-        "format": format_options.get(video_or_audio),
-        "outtmpl": f"output/{dt}_%(title)s.%(ext)s"
+        "outtmpl": f"output/{dt}_%(title)s.%(ext)s",
     }
 
-    if quality == "bad":
-        ydl_opts["format"] = f"{video_filter}[height<=480]+{audio_filter}"
+    if video_format_id or audio_format_id:
+        if video_format_id and audio_format_id:
+            format_id = f"{video_format_id}+{audio_format_id}"
+        else:
+            format_id = video_format_id or audio_format_id
+        ydl_opts["format"] = format_id
 
-    print(f"\n\n{ydl_opts}\n\n")
+    else:
+        ydl_opts["format"] = format_options.get(video_or_audio)
 
     try:
         ydl = yt_dlp.YoutubeDL(params=ydl_opts)
         video_info = ydl.extract_info(url, download=False)
+        video_info["auto_dl"] = auto_dl
         video_info["audio_formats"] = [
             format for format in video_info.get("formats", []) if format["resolution"] == "audio only"
         ]
@@ -66,47 +74,24 @@ def dl_form():
             if format["resolution"] != "audio only" and format["ext"] != "mhtml"
         ]
 
-        video_info["clean_name"] = ydl.prepare_filename(video_info)
+        video_info["clean_name"] = quote(ydl.prepare_filename(video_info))
 
         # get "selected" formats
-        format_ids = video_info["format_id"].split("+")
+        selected_format_ids = set(video_info["format_id"].split("+"))
 
-        for video_format in video_info["video_formats"]:
-            if format_ids[0] == video_format["format_id"] and video_format["audio_ext"] == "none":
-                print(f"video format: {video_format}")
-                break
-        for audio_format in video_info["audio_formats"] and video_format["video_ext"] == "none":
-            if format_ids[1] == audio_format["format_id"]:
-                print(f"audio format: {audio_format}")
-                break
-  
-        # print(f"vcodec: {vcodec}")
-        # print(f"acodec: {acodec}")
+        video_info["selected_ids"] = []
+        for format in video_info["formats"]:
+            if format["format_id"] in selected_format_ids:
+                video_info["selected_ids"].append(format["format_id"])
 
+        if auto_dl:
+            ydl.download([url])
+            return send_file(video_info["clean_name"], as_attachment=True)
 
-        formats = video_info.get("formats", [])
-        ydl.download([url])
-
-
-        # Debug print the formats
-        # print("Available formats:")
-        # for f in selected_formats:
-        #     print(f"{f}")
     except Exception as e:
         return f"An error occurred: {e}", 500
-    
-    # ydl.download([url])
 
-    # if selected_formats:
-    #     for f in selected_formats:
-    #         print(f"ID: {f['format_id']}, Info: {f}")
-
-    return render_template("form.html", video_info=video_info)
-
-
-@app.route("/download", methods=["GET"])
-def get_file():
-    return send_file(request.args["filename"], as_attachment=True)
+    return render_template("form.html", video_info=video_info, url=url)
 
 
 if __name__ == "__main__":
