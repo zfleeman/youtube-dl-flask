@@ -18,9 +18,15 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_PASSWORD }}
       
+      - name: Set short SHA
+        id: vars
+        run: echo "SHORT_SHA=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_ENV
+
       - name: Build and push Docker image
         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
         with:
           context: .
           push: true
-          tags: zachfleeman/yt-dlp-flask:latest
+          tags: |
+            zachfleeman/yt-dlp-flask:latest
+            zachfleeman/yt-dlp-flask:${{ env.SHORT_SHA }}
