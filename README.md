@@ -1,4 +1,4 @@
-# youtube-dl-flask
+# yt-dlp-flask
 
 A simple Flask application to assist in downloading videos and audio from YouTube for A/V projects on iOS.
 
